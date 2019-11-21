@@ -7,6 +7,8 @@ import datetime
 import json
 import os
 import numpy
+import tempfile
+import sys
  
 import chainer
 from chainer import training
@@ -168,31 +170,31 @@ def train(dir="datasets", print_log=False):
             trigger=record_trigger)
  
     # Write a log of evaluation statistics for each epoch
-    out = Outer()
+    # out = Outer()
     trainer.extend(extensions.LogReport())
-    if print_log:
-        trainer.extend(extensions.PrintReport(
-            ['epoch', 'main/loss', 'validation/main/loss',
-             'main/accuracy', 'validation/main/accuracy',
-             'test/main/loss', 'test/main/accuracy',
-             # 'elapsed_time']))
-             'elapsed_time']), trigger=record_trigger)
-    else:
-        trainer.extend(extensions.PrintReport(
+    # if print_log:
+    # trainer.extend(extensions.PrintReport(
+    #     ['epoch', 'main/loss', 'validation/main/loss',
+    #      'main/accuracy', 'validation/main/accuracy',
+    #      'test/main/loss', 'test/main/accuracy',
+    #      # 'elapsed_time']))
+    #      'elapsed_time']), trigger=record_trigger)
+    # else:
+        # # Print a progress bar to stdout
+        # trainer.extend(extensions.ProgressBar())
+    trainer.extend(extensions.PrintReport(
         ['main/accuracy', 'validation/main/accuracy',
-         'test/main/accuracy'], out=out), trigger=record_trigger)
- 
-    # Print a progress bar to stdout
-    #trainer.extend(extensions.ProgressBar())
+         'test/main/accuracy'], out=sys.stderr), trigger=record_trigger)
  
     # Run the training
+    print("Training", file=sys.stderr)
     trainer.run()
- 
+
     # free all unused memory blocks “cached” in the memory pool
     mempool = cupy.get_default_memory_pool()
     mempool.free_all_blocks()
     #print("val_acc:{}, test_acc:{}\n", out[-2], out[-1])
-    return float(out[-1])
+    # return float(out[-1])
  
 if __name__ == '__main__':
     main()
