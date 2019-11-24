@@ -116,7 +116,7 @@ def get_imdb(vocab=None, shrink=1, fine_grained=False,
 
 
 def download_other_dataset(name):
-    if name in ['custrev', 'mpqa', 'rt-polarity', 'subj']:
+    if name in ['custrev', 'mpqa', 'rt-polarity', 'subj', 'cornell']:
         files = [name + '.all']
     elif name == 'TREC':
         files = [name + suff for suff in ['.train.all', '.test.all']]
@@ -154,7 +154,7 @@ def _read_tsv(input_file, quotechar=None):
 
 def read_text_dataset(name, vocab=None, dir="datasets"):
     assert(name in ['TREC', 'stsa.binary', 'stsa.fine',
-                    'custrev', 'mpqa', 'rt-polarity', 'subj'])
+                    'custrev', 'mpqa', 'rt-polarity', 'subj', 'cornell'])
     train_path = os.path.join(dir, name, "train.tsv")
     eval_path = os.path.join("datasets", name, "dev.tsv")
     test_path = os.path.join("datasets", name, "test.tsv")
@@ -179,7 +179,7 @@ def read_text_dataset(name, vocab=None, dir="datasets"):
 def get_other_text_dataset(name, vocab=None, shrink=1,
                            char_based=False, seed=777):
     assert(name in ['TREC', 'stsa.binary', 'stsa.fine',
-                    'custrev', 'mpqa', 'rt-polarity', 'subj'])
+                    'custrev', 'mpqa', 'rt-polarity', 'subj', 'cornell'])
     datasets = download_other_dataset(name)
     train = read_other_dataset(
         datasets[0], shrink=shrink, char_based=char_based)

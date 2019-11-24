@@ -96,7 +96,7 @@ class AugProcessor(DataProcessor):
 
     def get_labels(self, name):
         """add your dataset here"""
-        if name in ['stsa.binary', 'mpqa', 'rt-polarity', 'subj']:
+        if name in ['stsa.binary', 'mpqa', 'rt-polarity', 'subj', 'cornell']:
             return ["0", "1"]
         elif name in ['stsa.fine']:
             return ["0", "1", "2", "3", "4"]
@@ -295,6 +295,7 @@ def run_aug(args, save_every_epoch=False):
         "mpqa": AugProcessor,
         "rt-polarity": AugProcessor,
         "subj": AugProcessor,
+        "cornell": AugProcessor,
     }
 
     task_name = args.task_name

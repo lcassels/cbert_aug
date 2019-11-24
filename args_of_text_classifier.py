@@ -26,7 +26,8 @@ def get_basic_arg_parser():
     parser.add_argument('--dataset', '-data', default='mpqa',
                         choices=['dbpedia', 'imdb.binary', 'imdb.fine',
                                  'TREC', 'stsa.binary', 'stsa.fine',
-                                 'custrev', 'mpqa', 'rt-polarity', 'subj'],
+                                 'custrev', 'mpqa', 'rt-polarity', 'subj',
+                                 'cornell'],
                         help='Name of dataset.')
     parser.add_argument('--model', '-model', default='cnn',
                         choices=['cnn', 'rnn', 'bow'],
