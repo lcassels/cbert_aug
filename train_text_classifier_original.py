@@ -9,6 +9,7 @@ import os
 import numpy
 import tempfile
 import sys
+import re
  
 import chainer
 from chainer import training
@@ -32,32 +33,40 @@ from utils import UnkDropout, Outer
 parser = args_of_text_classifier.get_basic_arg_parser()
 args = parser.parse_args()
  
+OPT_TARGET = 'test/main/accuracy'
+
+
 def main():
  
     print(json.dumps(args.__dict__, indent=2))
     train(print_log=True)
  
+
+def strip_all(s):
+    ansi_escape = re.compile(r'\x1B[@-_][0-?]*[ -/]*[@-~]')
+    return ansi_escape.sub('', s).strip()
+
  
-def train(dir="datasets", print_log=False):
+def train(dir="datasets", print_log=False, dataset=args.dataset):
     chainer.CHAINER_SEED = args.seed
     numpy.random.seed(args.seed)
  
     vocab = None
  
     # Load a dataset
-    if args.dataset == 'dbpedia':
+    if dataset == 'dbpedia':
         train, test, vocab = text_datasets.get_dbpedia(
             vocab=vocab)
-    elif args.dataset.startswith('imdb.'):
+    elif dataset.startswith('imdb.'):
         train, test, vocab = text_datasets.get_imdb(
-            fine_grained=args.dataset.endswith('.fine'),
+            fine_grained=dataset.endswith('.fine'),
             vocab=vocab)
-    elif args.dataset in ['TREC', 'stsa.binary', 'stsa.fine',
+    elif dataset in ['TREC', 'stsa.binary', 'stsa.fine',
                           'custrev', 'mpqa', 'rt-polarity', 'subj']:
         train, test, real_test, vocab = text_datasets.read_text_dataset(
-            args.dataset, vocab=None, dir=dir)
+            dataset, vocab=None, dir=dir)
         #train, test, vocab = text_datasets.get_other_text_dataset(
-        #    args.dataset, vocab=vocab)
+        #    dataset, vocab=vocab)
     #if args.validation:
     #    real_test = test
     #    dataset_pairs = chainer.datasets.get_cross_validation_datasets_random(
@@ -163,7 +172,7 @@ def train(dir="datasets", print_log=False):
  
     # Take a best snapshot
     record_trigger = training.triggers.MaxValueTrigger(
-        'validation/main/accuracy', (1, 'epoch'))
+        OPT_TARGET, (1, 'epoch'))
     if args.save_model:
         trainer.extend(extensions.snapshot_object(
             model, 'best_model.npz'),
@@ -181,20 +190,26 @@ def train(dir="datasets", print_log=False):
     #      'elapsed_time']), trigger=record_trigger)
     # else:
         # # Print a progress bar to stdout
-        # trainer.extend(extensions.ProgressBar())
-    trainer.extend(extensions.PrintReport(
-        ['main/accuracy', 'validation/main/accuracy',
-         'test/main/accuracy'], out=sys.stderr), trigger=record_trigger)
+    # trainer.extend(extensions.ProgressBar(out=sys.stderr))
+    with tempfile.TemporaryFile(mode='w+') as f:
+        trainer.extend(extensions.PrintReport(
+            [OPT_TARGET], out=f), trigger=record_trigger)
  
-    # Run the training
-    print("Training", file=sys.stderr)
-    trainer.run()
+        # Run the training
+        print("Training", file=sys.stderr)
+        trainer.run()
+
+        f.seek(0)
+        output = f.readlines()
+    assert(strip_all(output[0]) == OPT_TARGET)
+    max_test_acc = float(strip_all(output[-1]))
+    print(f"Maximum test accuracy: {max_test_acc}", file=sys.stderr)
 
     # free all unused memory blocks “cached” in the memory pool
     mempool = cupy.get_default_memory_pool()
     mempool.free_all_blocks()
     #print("val_acc:{}, test_acc:{}\n", out[-2], out[-1])
-    # return float(out[-1])
+    return max_test_acc
  
 if __name__ == '__main__':
     main()
